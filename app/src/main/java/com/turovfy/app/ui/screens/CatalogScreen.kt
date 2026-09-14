@@ -4,21 +4,24 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -37,7 +40,6 @@ fun CatalogScreen(
     val coroutineScope = rememberCoroutineScope()
     var tracks by remember { mutableStateOf<List<Track>>(emptyList()) }
     var searchQuery by remember { mutableStateOf("") }
-    var isSearching by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         try {
@@ -70,36 +72,34 @@ fun CatalogScreen(
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 14.dp)
             ) {
                 Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray)
-                Spacer(modifier = Modifier.width(8.dp))
-                TextField(
-                    value = searchQuery,
-                    onValueChange = { query ->
-                        searchQuery = query
-                        if (query.isNotBlank()) {
-                            isSearching = true
-                            coroutineScope.launch {
-                                try {
-                                    tracks = apiService.searchTracks(query).results
-                                } finally {
-                                    isSearching = false
+                Spacer(modifier = Modifier.width(10.dp))
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    if (searchQuery.isEmpty()) {
+                        Text("Поиск трека или исполнителя", color = Color.Gray, fontSize = 14.sp)
+                    }
+                    BasicTextField(
+                        value = searchQuery,
+                        onValueChange = { query ->
+                            searchQuery = query
+                            if (query.isNotBlank()) {
+                                coroutineScope.launch {
+                                    try {
+                                        tracks = apiService.searchTracks(query).results
+                                    } catch (_: Exception) {}
                                 }
                             }
-                        }
-                    },
-                    placeholder = { Text("Поиск трека или исполнителя", color = Color.Gray, fontSize = 14.sp) },
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White
-                    ),
-                    singleLine = true
-                )
+                        },
+                        textStyle = TextStyle(color = Color.White, fontSize = 14.sp),
+                        cursorBrush = SolidColor(Color.White),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
 
@@ -127,10 +127,12 @@ fun CatalogScreen(
                 IconButton(
                     onClick = {
                         coroutineScope.launch {
-                            val wave = apiService.getWave()
-                            if (wave.results.isNotEmpty()) {
-                                onTrackSelect(wave.results.first(), wave.results)
-                            }
+                            try {
+                                val wave = apiService.getWave()
+                                if (wave.results.isNotEmpty()) {
+                                    onTrackSelect(wave.results.first(), wave.results)
+                                }
+                            } catch (_: Exception) {}
                         }
                     },
                     modifier = Modifier
@@ -143,7 +145,12 @@ fun CatalogScreen(
         }
 
         Spacer(modifier = Modifier.height(20.dp))
-        Text(if (searchQuery.isBlank()) "Рекомендации" else "Результаты поиска", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+        Text(
+            if (searchQuery.isBlank()) "Рекомендации" else "Результаты поиска",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White
+        )
         Spacer(modifier = Modifier.height(12.dp))
 
         LazyColumn(
