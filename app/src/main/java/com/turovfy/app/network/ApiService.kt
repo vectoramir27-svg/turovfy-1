@@ -7,7 +7,6 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
-import retrofit2.http.Path
 import retrofit2.http.Query
 import java.util.concurrent.TimeUnit
 
@@ -29,7 +28,6 @@ interface ApiService {
     ): LyricsResponse
 
     companion object {
-        // Замени на адрес своего VPS или публичный туннель Cloudflare (например "https://api.domain.com/")
         const val BASE_URL = "http://10.0.2.2:8000/"
 
         fun getStreamUrl(trackId: String): String {
